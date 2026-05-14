@@ -60,36 +60,40 @@ async def list_workspaces(db: AsyncSession = Depends(get_db)) -> list[Workspace]
 
 @router.post(
     "/sources/text",
-    response_model=SourceResponse,
+    response_model=SourceDetailResponse,
     status_code=status.HTTP_201_CREATED,
 )
 async def create_text_source(
     payload: TextSourceCreate,
     db: AsyncSession = Depends(get_db),
-) -> Source:
+) -> SourceDetailResponse:
     """Create a text source."""
     try:
-        return await source_service.create_text_source(db, payload)
+        source, chunk_count = await source_service.create_text_source(db, payload)
     except NotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+    source_data = SourceResponse.model_validate(source).model_dump()
+    return SourceDetailResponse(**source_data, chunk_count=chunk_count)
 
 
 @router.post(
     "/sources/url",
-    response_model=SourceResponse,
+    response_model=SourceDetailResponse,
     status_code=status.HTTP_201_CREATED,
 )
 async def create_url_source(
     payload: UrlSourceCreate,
     db: AsyncSession = Depends(get_db),
-) -> Source:
+) -> SourceDetailResponse:
     """Create a URL source without scraping."""
     try:
-        return await source_service.create_url_source(db, payload)
+        source, chunk_count = await source_service.create_url_source(db, payload)
     except NotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    source_data = SourceResponse.model_validate(source).model_dump()
+    return SourceDetailResponse(**source_data, chunk_count=chunk_count)
 
 
 @router.get("/sources", response_model=list[SourceResponse])

@@ -30,7 +30,7 @@ class Source(Base):
 
     # Many sources → one workspace
     workspace: Mapped["Workspace"] = relationship("Workspace", back_populates="sources",)
-    chunks: Mapped[list["Chunk"]] = relationship("Chunk", back_populates="source", cascade="all, delete-orphan", lazy="selectin")
+    chunks: Mapped[list["Chunk"]] = relationship("Chunk", back_populates="source", cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
         return f"<Source id={self.id} title={self.title!r} workspace_id={self.workspace_id}>"

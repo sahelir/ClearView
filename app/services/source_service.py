@@ -16,7 +16,7 @@ from app.services.web_extraction import extract_webpage_text
 from app.services.workspace_service import workspace_exists
 
 
-async def create_text_source(db: AsyncSession, payload: TextSourceCreate) -> Source:
+async def create_text_source(db: AsyncSession, payload: TextSourceCreate) -> tuple[Source, int]:
     """Create a text source and its chunks."""
     if not await workspace_exists(db, payload.workspace_id):
         raise NotFoundError("Workspace not found")
@@ -30,7 +30,7 @@ async def create_text_source(db: AsyncSession, payload: TextSourceCreate) -> Sou
     )
     db.add(source)
     await db.flush()
-    await chunk_service.create_chunks(
+    chunk_rows = await chunk_service.create_chunks(
         db,
         source_id=source.id,
         workspace_id=source.workspace_id,
@@ -41,10 +41,10 @@ async def create_text_source(db: AsyncSession, payload: TextSourceCreate) -> Sou
         attribute_names=["id", "workspace_id", "source_type", "title", "url", "raw_text", "created_at"],
     )
     await db.commit()
-    return source
+    return source, len(chunk_rows)
 
 
-async def create_url_source(db: AsyncSession, payload: UrlSourceCreate) -> Source:
+async def create_url_source(db: AsyncSession, payload: UrlSourceCreate) -> tuple[Source, int]:
     """Create a URL source, extract webpage text, and create chunks."""
     if not await workspace_exists(db, payload.workspace_id):
         raise NotFoundError("Workspace not found")
@@ -63,7 +63,7 @@ async def create_url_source(db: AsyncSession, payload: UrlSourceCreate) -> Sourc
     )
     db.add(source)
     await db.flush()
-    await chunk_service.create_chunks(
+    chunk_rows = await chunk_service.create_chunks(
         db,
         source_id=source.id,
         workspace_id=source.workspace_id,
@@ -74,7 +74,7 @@ async def create_url_source(db: AsyncSession, payload: UrlSourceCreate) -> Sourc
         attribute_names=["id", "workspace_id", "source_type", "title", "url", "raw_text", "created_at"],
     )
     await db.commit()
-    return source
+    return source, len(chunk_rows)
 
 
 async def list_sources(db: AsyncSession, workspace_id: UUID) -> list[Source]:
