@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.schemas import WorkspaceCreate
 from app.models.workspace import Workspace
+from app.services.errors import NotFoundError
 
 
 async def create_workspace(db: AsyncSession, payload: WorkspaceCreate) -> Workspace:
@@ -32,3 +33,13 @@ async def workspace_exists(db: AsyncSession, workspace_id: UUID) -> bool:
     """Return whether a workspace exists."""
     result = await db.execute(select(Workspace.id).where(Workspace.id == workspace_id))
     return result.scalar_one_or_none() is not None
+
+
+async def delete_workspace(db: AsyncSession, workspace_id: UUID) -> None:
+    """Delete a workspace."""
+    workspace = await db.get(Workspace, workspace_id)
+    if workspace is None:
+        raise NotFoundError("Workspace not found")
+
+    await db.delete(workspace)
+    await db.commit()

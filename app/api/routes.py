@@ -12,6 +12,8 @@ from app.models.chunk import Chunk
 from app.models.schemas import (
     ChunkResponse,
     HealthResponse,
+    RetrieveRequest,
+    RetrieveResponse,
     SourceDetailResponse,
     SourceResponse,
     TextSourceCreate,
@@ -21,7 +23,7 @@ from app.models.schemas import (
 )
 from app.models.source import Source
 from app.models.workspace import Workspace
-from app.services import chunk_service, source_service, workspace_service
+from app.services import chunk_service, retrieval_service, source_service, workspace_service
 from app.services.errors import NotFoundError
 
 router = APIRouter()
@@ -96,7 +98,7 @@ async def create_url_source(
     return SourceDetailResponse(**source_data, chunk_count=chunk_count)
 
 
-@router.get("/sources", response_model=list[SourceResponse])
+@router.get("/workspaces/{workspace_id}/sources", response_model=list[SourceResponse])
 async def list_sources(
     workspace_id: UUID,
     db: AsyncSession = Depends(get_db),
@@ -122,13 +124,33 @@ async def get_source(
     return SourceDetailResponse(**source_data, chunk_count=chunk_count)
 
 
-@router.get("/chunks", response_model=list[ChunkResponse])
+@router.get("/chunks/{source_id}", response_model=list[ChunkResponse])
 async def list_chunks(
     source_id: UUID,
     db: AsyncSession = Depends(get_db),
 ) -> list[Chunk]:
     """List chunks for a source."""
     return await chunk_service.list_chunks(db, source_id)
+
+
+@router.post("/retrieve", response_model=RetrieveResponse)
+async def retrieve_chunks(
+    payload: RetrieveRequest,
+    db: AsyncSession = Depends(get_db),
+) -> RetrieveResponse:
+    """Retrieve semantically similar chunks for a workspace."""
+    try:
+        results = await retrieval_service.retrieve(db, payload)
+    except NotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+    return RetrieveResponse(
+        workspace_id=payload.workspace_id,
+        query=payload.query,
+        top_k=payload.top_k,
+        results=results,
+    )
 
 
 @router.delete("/sources/{source_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -141,4 +163,18 @@ async def delete_source(
         await source_service.delete_source(db, source_id)
     except NotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.delete("/workspaces/{workspace_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_workspace(
+    workspace_id: UUID,
+    db: AsyncSession = Depends(get_db),
+) -> Response:
+    """Delete a workspace and its local vector index."""
+    try:
+        await workspace_service.delete_workspace(db, workspace_id)
+    except NotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    await retrieval_service.delete_workspace_index(workspace_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

@@ -30,6 +30,10 @@ class Settings(BaseSettings):
     # External APIs (optional - for future use)
     openai_api_key: str | None = None
 
+    # Semantic retrieval
+    embedding_model_name: str = "sentence-transformers/all-MiniLM-L6-v2"
+    faiss_index_dir: str = "data/faiss_indexes"
+
     @field_validator("debug", mode="before")
     @classmethod
     def parse_debug(cls, value: object) -> object:

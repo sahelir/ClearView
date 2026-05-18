@@ -7,6 +7,9 @@ Canonical schema definitions live in app.models.schemas.
 from app.models.schemas import (
     ChunkResponse,
     HealthResponse,
+    RetrieveRequest,
+    RetrieveResponse,
+    RetrievedChunk,
     SourceDetailResponse,
     SourceResponse,
     TextSourceCreate,
@@ -17,6 +20,9 @@ from app.models.schemas import (
 
 __all__ = [
     "HealthResponse",
+    "RetrieveRequest",
+    "RetrieveResponse",
+    "RetrievedChunk",
     "ChunkResponse",
     "SourceDetailResponse",
     "SourceResponse",

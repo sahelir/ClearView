@@ -69,7 +69,7 @@ def main():
     print(json.dumps(url_source, indent=2, default=str))
 
     print("\n=== 6. List sources in the workspace ===")
-    sources = request("GET", f"/sources?workspace_id={workspace_id}")
+    sources = request("GET", f"/workspaces/{workspace_id}/sources")
     print(json.dumps(sources, indent=2, default=str))
 
     print("\n=== 7. Get text source details ===")
@@ -78,7 +78,7 @@ def main():
     assert source_detail["chunk_count"] > 0
 
     print("\n=== 8. List text source chunks ===")
-    chunks = request("GET", f"/chunks?source_id={text_source['id']}")
+    chunks = request("GET", f"/chunks/{text_source['id']}")
     print(json.dumps(chunks, indent=2, default=str))
     assert len(chunks) == source_detail["chunk_count"]
 

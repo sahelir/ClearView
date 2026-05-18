@@ -21,3 +21,6 @@ build/
 .pytest_cache/
 .coverage
 htmlcov/
+
+# Local vector indexes and model artifacts
+data/

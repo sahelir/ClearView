@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.chunk import Chunk
 from app.models.schemas import TextSourceCreate, UrlSourceCreate
 from app.models.source import Source
-from app.services import chunk_service
+from app.services import chunk_service, retrieval_service
 from app.services.errors import NotFoundError
 from app.services.text_processing import chunk_text, clean_text
 from app.services.web_extraction import extract_webpage_text
@@ -25,6 +25,7 @@ async def create_text_source(db: AsyncSession, payload: TextSourceCreate) -> tup
     source = Source(
         workspace_id=payload.workspace_id,
         source_type="text",
+        source_publisher=payload.source_publisher,
         title=payload.title,
         raw_text=raw_text,
     )
@@ -38,9 +39,10 @@ async def create_text_source(db: AsyncSession, payload: TextSourceCreate) -> tup
     )
     await db.refresh(
         source,
-        attribute_names=["id", "workspace_id", "source_type", "title", "url", "raw_text", "created_at"],
+        attribute_names=["id", "workspace_id", "source_type", "source_publisher", "title", "url", "raw_text", "created_at"],
     )
     await db.commit()
+    await retrieval_service.update_workspace_index_for_chunks(chunk_rows)
     return source, len(chunk_rows)
 
 
@@ -71,9 +73,10 @@ async def create_url_source(db: AsyncSession, payload: UrlSourceCreate) -> tuple
     )
     await db.refresh(
         source,
-        attribute_names=["id", "workspace_id", "source_type", "title", "url", "raw_text", "created_at"],
+        attribute_names=["id", "workspace_id", "source_type", "source_publisher", "title", "url", "raw_text", "created_at"],
     )
     await db.commit()
+    await retrieval_service.update_workspace_index_for_chunks(chunk_rows)
     return source, len(chunk_rows)
 
 
@@ -111,5 +114,12 @@ async def delete_source(db: AsyncSession, source_id: UUID) -> None:
     if source is None:
         raise NotFoundError("Source not found")
 
+    workspace_id = source.workspace_id
     await db.delete(source)
     await db.commit()
+    await build_workspace_index_if_chunks_exist(db, workspace_id)
+
+
+async def build_workspace_index_if_chunks_exist(db: AsyncSession, workspace_id: UUID) -> None:
+    """Rebuild a workspace index after source deletion."""
+    await retrieval_service.build_workspace_index(db, workspace_id)

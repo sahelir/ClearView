@@ -23,6 +23,7 @@ class Source(Base):
         index=True,
     )
     source_type: Mapped[str] = mapped_column(String(127), nullable=False)
+    source_publisher: Mapped[str | None] = mapped_column(String(255), nullable=True)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     url: Mapped[str | None] = mapped_column(Text, nullable=True)
     raw_text: Mapped[str | None] = mapped_column(Text, nullable=True)

@@ -38,6 +38,7 @@ class TextSourceCreate(BaseModel):
 
     workspace_id: UUID
     title: str = Field(..., min_length=1, max_length=255)
+    source_publisher: str | None = Field(None, max_length=255)
     raw_text: str = Field(..., min_length=1)
 
 
@@ -57,6 +58,7 @@ class SourceResponse(BaseModel):
     id: UUID
     workspace_id: UUID
     source_type: str
+    source_publisher: str | None
     title: str
     url: str | None
     raw_text: str | None
@@ -81,3 +83,32 @@ class ChunkResponse(BaseModel):
     chunk_index: int
     char_count: int
     created_at: datetime
+
+
+class RetrieveRequest(BaseModel):
+    """Request schema for semantic chunk retrieval."""
+
+    workspace_id: UUID
+    query: str = Field(..., min_length=1)
+    top_k: int = Field(5, ge=1, le=50)
+
+
+class RetrievedChunk(BaseModel):
+    """A chunk returned by semantic retrieval."""
+
+    id: UUID
+    source_id: UUID
+    workspace_id: UUID
+    chunk_text: str
+    chunk_index: int
+    char_count: int
+    similarity_score: float
+
+
+class RetrieveResponse(BaseModel):
+    """Response schema for semantic retrieval."""
+
+    workspace_id: UUID
+    query: str
+    top_k: int
+    results: list[RetrievedChunk]

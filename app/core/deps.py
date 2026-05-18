@@ -5,7 +5,7 @@ Use these with Depends() to inject shared resources into route handlers.
 
 from collections.abc import AsyncGenerator
 
-from fastapi import Depends
+from fastapi import Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import async_session_maker
@@ -25,6 +25,9 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with async_session_maker() as session:
         try:
             yield session
+        except HTTPException:
+            await session.rollback()
+            raise
         except Exception:
             await session.rollback()
             logger.exception("Database session error")

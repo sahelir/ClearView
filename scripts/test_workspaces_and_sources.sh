@@ -36,13 +36,13 @@ echo "$URL_SOURCE_RESPONSE" | jq .
 URL_SOURCE_ID=$(echo "$URL_SOURCE_RESPONSE" | jq -r '.id')
 
 echo -e "\n=== 6. List sources in the workspace ==="
-curl -s "${BASE_URL}/sources?workspace_id=${WORKSPACE_ID}" | jq .
+curl -s "${BASE_URL}/workspaces/${WORKSPACE_ID}/sources" | jq .
 
 echo -e "\n=== 7. Get text source details ==="
 curl -s "${BASE_URL}/sources/${TEXT_SOURCE_ID}" | jq .
 
 echo -e "\n=== 8. List text source chunks ==="
-curl -s "${BASE_URL}/chunks?source_id=${TEXT_SOURCE_ID}" | jq .
+curl -s "${BASE_URL}/chunks/${TEXT_SOURCE_ID}" | jq .
 
 echo -e "\n=== 9. Delete URL source ==="
 curl -s -X DELETE "${BASE_URL}/sources/${URL_SOURCE_ID}"

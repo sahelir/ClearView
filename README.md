@@ -43,12 +43,15 @@ Production-style FastAPI backend skeleton with async SQLAlchemy, Pydantic, and d
 - `GET /workspaces` - List all workspaces
 - `POST /sources/text` - Create a text source
 - `POST /sources/url` - Fetch a webpage, extract readable text, and create a URL source
-- `GET /sources?workspace_id=...` - List sources in a workspace
+- `GET /workspaces/{workspace_id}/sources` - List sources in a workspace
 - `GET /sources/{id}` - Get source details with `chunk_count`
-- `GET /chunks?source_id=...` - List chunks for a source
+- `GET /chunks/{source_id}` - List chunks for a source
+- `POST /retrieve` - Retrieve semantically similar chunks within a workspace
 - `DELETE /sources/{id}` - Delete a source
 - `GET /docs` - Swagger UI
 - `GET /redoc` - ReDoc documentation
+
+FAISS indexes are persisted locally under `data/faiss_indexes/` and are ignored by git.
 
 ## Testing Workspaces & Sources
 
